@@ -1,4 +1,4 @@
-// Рисует кубик в клеточку
+// Рисует полосатый квадрат
 
 #include <gl/glew.h>
 #include <SFML/OpenGL.hpp>
@@ -20,64 +20,34 @@ struct Vertex
 {
     GLfloat x;
     GLfloat y;
-    GLfloat z;
 };
+
+bool flag = false;
 
 // Исходный код вершинного шейдера
 const char* VertexShaderSource = R"(
     #version 330 core
-
-    // Координаты вершины. Атрибут, инициализируется через буфер.
-    in vec3 vertexPosition;
-    
-    // Выходной параметр с координатами вершины, интерполируется и передётся во фрагментный шейдер 
-    out vec3 vPosition;
+    in vec2 coord;
+    out vec2 vPosition;
 
     void main() {
-        // Передаём непреобразованную координату во фрагментный шейдер
-        vPosition = vertexPosition;
-
-        // Захардкодим углы поворота
-        float x_angle = 0;
-        float y_angle = 0;
-        
-        // Поворачиваем вершину
-        vec3 position = vertexPosition * mat3(
-            1, 0, 0,
-            0, 1, 0,
-            0, 0, 1
-        ) * mat3(
-            1, 0, 0,
-            0, 1, 0,
-            0, 0, 1
-        );
-
-        // Присваиваем вершину волшебной переменной gl_Position
-        gl_Position = vec4(position, 1.0);
+        vPosition = coord;
+        gl_Position = vec4(coord, 0.0, 1.0);
     }
 )";
 
 // Исходный код фрагментного шейдера
 const char* FragShaderSource = R"(
     #version 330 core
-
-    // Интерполированные координаты вершины, передаются из вершинного шейдера
-    in vec3 vPosition;
-
-    // Цвет, который будем отрисовывать
+    in vec2 vPosition;
     out vec4 color;
-
     void main() {
-        // Тут происходит магия, чтобы кубик выглядел красиво
-        float k = 14;
-        int ind = int(vPosition.x * k);
-        if (ind == 0)
-            color = vec4(1.0, 0.5, 0.5, 1);
+        float k = 15;
+        int ind = int(vPosition.x * k + 10);
         if (ind - (ind / 2) * 2 != 0)
-            color = vec4(1.0, 0.5, 0.5, 1);
-        else
-            color = vec4(0.4, 0.3, 0.7, 1);
-
+		    color = vec4(0.4, 0.3, 0.7, 1);
+		else 
+			color = vec4(1.0, 0.5, 0.5, 1);
     }
 )";
 
@@ -155,22 +125,10 @@ void ShaderLog(unsigned int shader)
 void InitVBO()
 {
     glGenBuffers(1, &VBO);
-    // Вершины кубика
+    // Вершины нашего треугольника
     Vertex triangle[] = {
-        { -0.5, -0.5, +0.5 }, { -0.5, +0.5, +0.5 }, { +0.5, +0.5, +0.5 },
-        { +0.5, +0.5, +0.5 }, { +0.5, -0.5, +0.5 }, { -0.5, -0.5, +0.5 },
-        { -0.5, -0.5, -0.5 }, { +0.5, +0.5, -0.5 }, { -0.5, +0.5, -0.5 },
-        { +0.5, +0.5, -0.5 }, { -0.5, -0.5, -0.5 }, { +0.5, -0.5, -0.5 },
-
-        { -0.5, +0.5, -0.5 }, { -0.5, +0.5, +0.5 }, { +0.5, +0.5, +0.5 },
-        { +0.5, +0.5, +0.5 }, { +0.5, +0.5, -0.5 }, { -0.5, +0.5, -0.5 },
-        { -0.5, -0.5, -0.5 }, { +0.5, -0.5, +0.5 }, { -0.5, -0.5, +0.5 },
-        { +0.5, -0.5, +0.5 }, { -0.5, -0.5, -0.5 }, { +0.5, -0.5, -0.5 },
-
-        { +0.5, -0.5, -0.5 }, { +0.5, -0.5, +0.5 }, { +0.5, +0.5, +0.5 },
-        { +0.5, +0.5, +0.5 }, { +0.5, +0.5, -0.5 }, { +0.5, -0.5, -0.5 },
-        { -0.5, -0.5, -0.5 }, { -0.5, +0.5, +0.5 }, { -0.5, -0.5, +0.5 },
-        { -0.5, +0.5, +0.5 }, { -0.5, -0.5, -0.5 }, { -0.5, +0.5, -0.5 },
+        { -0.5, 0.5 }, { 0.5, 0.5 }, { 0.5, -0.5 },
+        { -0.5, 0.5 }, { -0.5, -0.5 }, { 0.5, -0.5 }
     };
     // Передаем вершины в буфер
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -215,7 +173,7 @@ void InitShader() {
     }
 
     // Вытягиваем ID атрибута из собранной программы
-    const char* attr_name = "vertexPosition";
+    const char* attr_name = "coord";
     Attrib_vertex = glGetAttribLocation(Program, attr_name);
     if (Attrib_vertex == -1)
     {
@@ -229,8 +187,6 @@ void InitShader() {
 void Init() {
     InitShader();
     InitVBO();
-    // Включаем проверку глубины
-    glEnable(GL_DEPTH_TEST);
 }
 
 
@@ -242,11 +198,11 @@ void Draw() {
     // Подключаем VBO
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     // Указывая pointer 0 при подключенном буфере, мы указываем что данные в VBO
-    glVertexAttribPointer(Attrib_vertex, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(Attrib_vertex, 2, GL_FLOAT, GL_FALSE, 0, 0);
     // Отключаем VBO
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     // Передаем данные на видеокарту(рисуем)
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
     // Отключаем массив атрибутов
     glDisableVertexAttribArray(Attrib_vertex);
     // Отключаем шейдерную программу

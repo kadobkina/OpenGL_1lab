@@ -15,10 +15,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stripedSquare.cpp">
+    <ClCompile Include="pentagon.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="yellowCube.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="stripedSquare.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>

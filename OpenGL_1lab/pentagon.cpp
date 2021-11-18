@@ -1,4 +1,4 @@
-// Рисует желтый куб
+// Р РёСЃСѓРµС‚ РїСЂР°РІРёР»СЊРЅС‹Р№ РїСЏС‚СѓРіРѕР»СЊРЅРёРє
 
 #include <gl/glew.h>
 #include <SFML/OpenGL.hpp>
@@ -8,67 +8,35 @@
 #include <iostream>
 
 
-// Переменные с индентификаторами ID
-// ID шейдерной программы
+// РџРµСЂРµРјРµРЅРЅС‹Рµ СЃ РёРЅРґРµРЅС‚РёС„РёРєР°С‚РѕСЂР°РјРё ID
+// ID С€РµР№РґРµСЂРЅРѕР№ РїСЂРѕРіСЂР°РјРјС‹
 GLuint Program;
-// ID атрибута
+// ID Р°С‚СЂРёР±СѓС‚Р°
 GLint Attrib_vertex;
 // ID Vertex Buffer Object
 GLuint VBO;
-// Вершина
+// Р’РµСЂС€РёРЅР°
 struct Vertex
 {
     GLfloat x;
     GLfloat y;
-    GLfloat z;
 };
 
-// Исходный код вершинного шейдера
+// РСЃС…РѕРґРЅС‹Р№ РєРѕРґ РІРµСЂС€РёРЅРЅРѕРіРѕ С€РµР№РґРµСЂР°
 const char* VertexShaderSource = R"(
     #version 330 core
-
-    // Координаты вершины. Атрибут, инициализируется через буфер.
-    in vec3 vertexPosition;
-    
-    // Выходной параметр с координатами вершины, интерполируется и передётся во фрагментный шейдер 
-    out vec3 vPosition;
-
+    in vec2 coord;
     void main() {
-        // Передаём непреобразованную координату во фрагментный шейдер
-        vPosition = vertexPosition;
-
-        // Захардкодим углы поворота
-        float x_angle = 0.5;
-        float y_angle = 0.5;
-        
-        // Поворачиваем вершину
-        vec3 position = vertexPosition * mat3(
-            1, 0, 0,
-            0, cos(x_angle), -sin(x_angle),
-            0, sin(x_angle), cos(x_angle)
-        ) * mat3(
-            cos(y_angle), 0, sin(y_angle),
-            0, 1, 0,
-            -sin(y_angle), 0, cos(y_angle)
-        );
-
-        // Присваиваем вершину волшебной переменной gl_Position
-        gl_Position = vec4(position, 1.0);
+        gl_Position = vec4(coord, 0.0, 1.0);
     }
 )";
 
-// Исходный код фрагментного шейдера
+// РСЃС…РѕРґРЅС‹Р№ РєРѕРґ С„СЂР°РіРјРµРЅС‚РЅРѕРіРѕ С€РµР№РґРµСЂР°
 const char* FragShaderSource = R"(
     #version 330 core
-
-    // Интерполированные координаты вершины, передаются из вершинного шейдера
-    in vec3 vPosition;
-
-    // Цвет, который будем отрисовывать
     out vec4 color;
-
     void main() {
-            color = vec4(1, 0.8, 0.2, 0);
+        color = vec4(0.4, 0.9, 0.7, 1);
     }
 )";
 
@@ -84,7 +52,7 @@ int main() {
 
     window.setActive(true);
 
-    // Инициализация glew
+    // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ glew
     glewInit();
 
     Init();
@@ -112,16 +80,16 @@ int main() {
 }
 
 
-// Проверка ошибок OpenGL, если есть то вывод в консоль тип ошибки
+// РџСЂРѕРІРµСЂРєР° РѕС€РёР±РѕРє OpenGL, РµСЃР»Рё РµСЃС‚СЊ С‚Рѕ РІС‹РІРѕРґ РІ РєРѕРЅСЃРѕР»СЊ С‚РёРї РѕС€РёР±РєРё
 void checkOpenGLerror() {
     GLenum errCode;
-    // Коды ошибок можно смотреть тут
+    // РљРѕРґС‹ РѕС€РёР±РѕРє РјРѕР¶РЅРѕ СЃРјРѕС‚СЂРµС‚СЊ С‚СѓС‚
     // https://www.khronos.org/opengl/wiki/OpenGL_Error
     if ((errCode = glGetError()) != GL_NO_ERROR)
         std::cout << "OpenGl error!: " << errCode << std::endl;
 }
 
-// Функция печати лога шейдера
+// Р¤СѓРЅРєС†РёСЏ РїРµС‡Р°С‚Рё Р»РѕРіР° С€РµР№РґРµСЂР°
 void ShaderLog(unsigned int shader)
 {
     int infologLen = 0;
@@ -146,24 +114,18 @@ void ShaderLog(unsigned int shader)
 void InitVBO()
 {
     glGenBuffers(1, &VBO);
-    // Вершины кубика
-    Vertex triangle[] = {
-        { -0.5, -0.5, +0.5 }, { -0.5, +0.5, +0.5 }, { +0.5, +0.5, +0.5 },
-        { +0.5, +0.5, +0.5 }, { +0.5, -0.5, +0.5 }, { -0.5, -0.5, +0.5 },
-        { -0.5, -0.5, -0.5 }, { +0.5, +0.5, -0.5 }, { -0.5, +0.5, -0.5 },
-        { +0.5, +0.5, -0.5 }, { -0.5, -0.5, -0.5 }, { +0.5, -0.5, -0.5 },
-
-        { -0.5, +0.5, -0.5 }, { -0.5, +0.5, +0.5 }, { +0.5, +0.5, +0.5 },
-        { +0.5, +0.5, +0.5 }, { +0.5, +0.5, -0.5 }, { -0.5, +0.5, -0.5 },
-        { -0.5, -0.5, -0.5 }, { +0.5, -0.5, +0.5 }, { -0.5, -0.5, +0.5 },
-        { +0.5, -0.5, +0.5 }, { -0.5, -0.5, -0.5 }, { +0.5, -0.5, -0.5 },
-
-        { +0.5, -0.5, -0.5 }, { +0.5, -0.5, +0.5 }, { +0.5, +0.5, +0.5 },
-        { +0.5, +0.5, +0.5 }, { +0.5, +0.5, -0.5 }, { +0.5, -0.5, -0.5 },
-        { -0.5, -0.5, -0.5 }, { -0.5, +0.5, +0.5 }, { -0.5, -0.5, +0.5 },
-        { -0.5, +0.5, +0.5 }, { -0.5, -0.5, -0.5 }, { -0.5, +0.5, -0.5 },
-    };
-    // Передаем вершины в буфер
+    float PI = 3.14159265358979323846;
+    float angleIncrement = 360.0f / 5;  // СѓРіР»С‹ РїСЏС‚РёСѓРіРѕР»СЊРЅРёРєР°
+    angleIncrement *= PI / 180.0f;
+    // Р’РµСЂС€РёРЅС‹ РЅР°С€РµРіРѕ С‚СЂРµСѓРіРѕР»СЊРЅРёРєР°
+    Vertex triangle[5];
+    float angle = 0.0f;
+    for (int i = 0; i < 5; ++i) {
+        triangle[i] = { 0.7f * cos(angle), 0.7f * sin(angle)};
+        angle += angleIncrement;
+    }
+     
+    // РџРµСЂРµРґР°РµРј РІРµСЂС€РёРЅС‹ РІ Р±СѓС„РµСЂ
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(triangle), triangle, GL_STATIC_DRAW);
     checkOpenGLerror();
@@ -171,32 +133,32 @@ void InitVBO()
 
 
 void InitShader() {
-    // Создаем вершинный шейдер
+    // РЎРѕР·РґР°РµРј РІРµСЂС€РёРЅРЅС‹Р№ С€РµР№РґРµСЂ
     GLuint vShader = glCreateShader(GL_VERTEX_SHADER);
-    // Передаем исходный код
+    // РџРµСЂРµРґР°РµРј РёСЃС…РѕРґРЅС‹Р№ РєРѕРґ
     glShaderSource(vShader, 1, &VertexShaderSource, NULL);
-    // Компилируем шейдер
+    // РљРѕРјРїРёР»РёСЂСѓРµРј С€РµР№РґРµСЂ
     glCompileShader(vShader);
     std::cout << "vertex shader \n";
     ShaderLog(vShader);
 
-    // Создаем фрагментный шейдер
+    // РЎРѕР·РґР°РµРј С„СЂР°РіРјРµРЅС‚РЅС‹Р№ С€РµР№РґРµСЂ
     GLuint fShader = glCreateShader(GL_FRAGMENT_SHADER);
-    // Передаем исходный код
+    // РџРµСЂРµРґР°РµРј РёСЃС…РѕРґРЅС‹Р№ РєРѕРґ
     glShaderSource(fShader, 1, &FragShaderSource, NULL);
-    // Компилируем шейдер
+    // РљРѕРјРїРёР»РёСЂСѓРµРј С€РµР№РґРµСЂ
     glCompileShader(fShader);
     std::cout << "fragment shader \n";
     ShaderLog(fShader);
 
-    // Создаем программу и прикрепляем шейдеры к ней
+    // РЎРѕР·РґР°РµРј РїСЂРѕРіСЂР°РјРјСѓ Рё РїСЂРёРєСЂРµРїР»СЏРµРј С€РµР№РґРµСЂС‹ Рє РЅРµР№
     Program = glCreateProgram();
     glAttachShader(Program, vShader);
     glAttachShader(Program, fShader);
 
-    // Линкуем шейдерную программу
+    // Р›РёРЅРєСѓРµРј С€РµР№РґРµСЂРЅСѓСЋ РїСЂРѕРіСЂР°РјРјСѓ
     glLinkProgram(Program);
-    // Проверяем статус сборки
+    // РџСЂРѕРІРµСЂСЏРµРј СЃС‚Р°С‚СѓСЃ СЃР±РѕСЂРєРё
     int link_ok;
     glGetProgramiv(Program, GL_LINK_STATUS, &link_ok);
     if (!link_ok)
@@ -205,8 +167,8 @@ void InitShader() {
         return;
     }
 
-    // Вытягиваем ID атрибута из собранной программы
-    const char* attr_name = "vertexPosition";
+    // Р’С‹С‚СЏРіРёРІР°РµРј ID Р°С‚СЂРёР±СѓС‚Р° РёР· СЃРѕР±СЂР°РЅРЅРѕР№ РїСЂРѕРіСЂР°РјРјС‹
+    const char* attr_name = "coord";
     Attrib_vertex = glGetAttribLocation(Program, attr_name);
     if (Attrib_vertex == -1)
     {
@@ -220,41 +182,39 @@ void InitShader() {
 void Init() {
     InitShader();
     InitVBO();
-    // Включаем проверку глубины
-    glEnable(GL_DEPTH_TEST);
 }
 
 
 void Draw() {
-    // Устанавливаем шейдерную программу текущей
+    // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј С€РµР№РґРµСЂРЅСѓСЋ РїСЂРѕРіСЂР°РјРјСѓ С‚РµРєСѓС‰РµР№
     glUseProgram(Program);
-    // Включаем массив атрибутов
+    // Р’РєР»СЋС‡Р°РµРј РјР°СЃСЃРёРІ Р°С‚СЂРёР±СѓС‚РѕРІ
     glEnableVertexAttribArray(Attrib_vertex);
-    // Подключаем VBO
+    // РџРѕРґРєР»СЋС‡Р°РµРј VBO
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    // Указывая pointer 0 при подключенном буфере, мы указываем что данные в VBO
-    glVertexAttribPointer(Attrib_vertex, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    // Отключаем VBO
+    // РЈРєР°Р·С‹РІР°СЏ pointer 0 РїСЂРё РїРѕРґРєР»СЋС‡РµРЅРЅРѕРј Р±СѓС„РµСЂРµ, РјС‹ СѓРєР°Р·С‹РІР°РµРј С‡С‚Рѕ РґР°РЅРЅС‹Рµ РІ VBO
+    glVertexAttribPointer(Attrib_vertex, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    // РћС‚РєР»СЋС‡Р°РµРј VBO
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    // Передаем данные на видеокарту(рисуем)
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    // Отключаем массив атрибутов
+    // РџРµСЂРµРґР°РµРј РґР°РЅРЅС‹Рµ РЅР° РІРёРґРµРѕРєР°СЂС‚Сѓ(СЂРёСЃСѓРµРј)
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 5);
+    // РћС‚РєР»СЋС‡Р°РµРј РјР°СЃСЃРёРІ Р°С‚СЂРёР±СѓС‚РѕРІ
     glDisableVertexAttribArray(Attrib_vertex);
-    // Отключаем шейдерную программу
+    // РћС‚РєР»СЋС‡Р°РµРј С€РµР№РґРµСЂРЅСѓСЋ РїСЂРѕРіСЂР°РјРјСѓ
     glUseProgram(0);
     checkOpenGLerror();
 }
 
 
-// Освобождение шейдеров
+// РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ С€РµР№РґРµСЂРѕРІ
 void ReleaseShader() {
-    // Передавая ноль, мы отключаем шейдрную программу
+    // РџРµСЂРµРґР°РІР°СЏ РЅРѕР»СЊ, РјС‹ РѕС‚РєР»СЋС‡Р°РµРј С€РµР№РґСЂРЅСѓСЋ РїСЂРѕРіСЂР°РјРјСѓ
     glUseProgram(0);
-    // Удаляем шейдерную программу
+    // РЈРґР°Р»СЏРµРј С€РµР№РґРµСЂРЅСѓСЋ РїСЂРѕРіСЂР°РјРјСѓ
     glDeleteProgram(Program);
 }
 
-// Освобождение буфера
+// РћСЃРІРѕР±РѕР¶РґРµРЅРёРµ Р±СѓС„РµСЂР°
 void ReleaseVBO()
 {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
